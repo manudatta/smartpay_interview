@@ -6,6 +6,8 @@ import org.http4s._
 import org.http4s.circe._
 
 import prices.data._
+import org.http4s.client.Client
+
 
 object SmartcloudInstanceKindService {
 
@@ -14,9 +16,10 @@ object SmartcloudInstanceKindService {
       token: String
   )
 
-  def make[F[_]: Concurrent](config: Config): InstanceKindService[F] = new SmartcloudInstanceKindService(config)
+  def make[F[_]: Concurrent](httpClient: Resource[IO,Client[IO]], config: Config): InstanceKindService[F] = new SmartcloudInstanceKindService(httpClient,config)
 
   private final class SmartcloudInstanceKindService[F[_]: Concurrent](
+      httpClient: Resource[IO,Client[IO]],
       config: Config
   ) extends InstanceKindService[F] {
 
@@ -24,9 +27,12 @@ object SmartcloudInstanceKindService {
 
     val getAllUri = s"${config.baseUri}/instances"
 
-    override def getAll(): F[List[InstanceKind]] =
+    def getDataFromProxy() : List[String]  = {
       List("sc2-micro", "sc2-small", "sc2-medium") // Dummy data. Your implementation should call the smartcloud API.
-        .map(InstanceKind(_))
+    }
+
+    override def getAll(): F[List[InstanceKind]] =
+        getDataFromProxy().map(InstanceKind(_))
         .pure[F]
 
   }
