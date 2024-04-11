@@ -24,7 +24,6 @@ object SmartcloudInstanceKindService {
       config: Config
   ) extends InstanceKindService[F] {
 
-
     val getAllUri = s"${config.baseUri}/instances"
 
     def proxy(): F[List[InstanceKind]] =
@@ -42,7 +41,7 @@ object SmartcloudInstanceKindService {
       response.status match {
         case Status.Ok =>
           response.asJsonDecode[List[String]].flatMap(x => x.map(y => InstanceKind(y)).pure[F])
-        case status_other =>  println("I was here")
+        case status_other =>
           APICallFailure(createMsg(status_other)).raiseError[F, List[InstanceKind]]
       }
 

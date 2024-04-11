@@ -10,9 +10,6 @@ import org.http4s.server.Router
 import prices.routes.protocol._
 import prices.services.InstanceKindService
 import prices.services.InstanceKindService.Exception.APICallFailure
-import scala.util.Success
-import scala.util.Try
-import scala.util.Failure
 
 final case class InstanceKindRoutes[F[_]: Sync](instanceKindService: InstanceKindService[F]) extends Http4sDsl[F] {
 
@@ -22,13 +19,15 @@ final case class InstanceKindRoutes[F[_]: Sync](instanceKindService: InstanceKin
 
   private val get: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root =>
-        instanceKindService
+      instanceKindService
         .getAll()
         .flatMap(kinds => Ok(kinds.map(k => InstanceKindResponse(k))))
-        .handleErrorWith( error => error match {
-          case APICallFailure(msg) => InternalServerError(msg)
-          case _ => InternalServerError("Unknown error")
-        }) 
+        .handleErrorWith(error =>
+          error match {
+            case APICallFailure(msg) => InternalServerError(msg)
+            case _                   => InternalServerError("Unknown error")
+          }
+        )
   }
 
   def routes: HttpRoutes[F] =

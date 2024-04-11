@@ -1,15 +1,19 @@
 package prices
 
 import cats.effect._
+import cats.syntax.semigroupk._
 import com.comcast.ip4s._
 import fs2.Stream
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.Logger
 
 import prices.config.Config
-import prices.routes.InstanceKindRoutes
 import prices.services.SmartcloudInstanceKindService
 import org.http4s.ember.client.EmberClientBuilder
+import prices.routes.PriceRoutes
+import prices.services.SmartcloudPriceService
+import prices.routes.InstanceKindRoutes
+import org.http4s.HttpApp
 
 object Server {
 
@@ -24,9 +28,17 @@ object Server {
         config.smartcloud.token
       )
     )
+    val priceService = SmartcloudPriceService.make[IO](
+      httpClient,
+      SmartcloudPriceService.Config(
+        config.smartcloud.baseUri,
+        config.smartcloud.token
+      )
+    )
 
     val httpApp = (
-      InstanceKindRoutes[IO](instanceKindService).routes
+      PriceRoutes[IO](priceService).routes
+      <+> InstanceKindRoutes[IO](instanceKindService).routes
     ).orNotFound
 
     Stream

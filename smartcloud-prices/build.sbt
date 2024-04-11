@@ -10,6 +10,8 @@ lazy val root = (project in file("."))
       L.http4s("circe"),
       L.http4s("dsl"),
       L.circe,
+      L.cc,
+      L.cp,
       L.logback,
       L.pureConfig,
       T.munit,
