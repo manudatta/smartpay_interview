@@ -13,6 +13,7 @@ object PriceService {
   sealed trait Exception extends NoStackTrace
   object Exception {
     case class APICallFailure(message: String) extends Exception
+    case class InstanceKindNotFound(message: String) extends Exception
   }
 
 }

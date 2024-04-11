@@ -7,10 +7,9 @@ import org.http4s.circe._
 import io.circe.generic.auto._
 
 
-import prices.data._
 import org.http4s.client.Client
 import prices.services.helpers.ProxyRequest
-import prices.services.InstanceKindService.Exception.APICallFailure
+import prices.services.PriceService.Exception._
 import prices.routes.protocol.ProxyPriceResponse
 import prices.routes.protocol.PriceResponse
 
@@ -36,6 +35,7 @@ object SmartcloudPriceService {
         val request = ProxyRequest(config.token)
         Uri.fromString(s"${getAllUri}/${kind}").toOption match {
           case Some(finalUri) => client.run(request.withUri(finalUri)).use(getAndHandleResponse)
+          case _ =>  APICallFailure("Error in building proxy url").raiseError[F, PriceResponse]
         }
       }
 	
@@ -44,8 +44,9 @@ object SmartcloudPriceService {
     private def getAndHandleResponse(response: Response[F]): F[PriceResponse] =
       response.status match {
         case Status.Ok =>
-          response.asJsonDecode[ProxyPriceResponse].map( x => {println(x)
-          PriceResponse(x.kind,x.price)})
+          response.asJsonDecode[ProxyPriceResponse].map( x => PriceResponse(x.kind,x.price))
+        case status @ Status.NotFound  => InstanceKindNotFound(createMsg(status)).raiseError[F, PriceResponse]
+        case status_other          => APICallFailure(createMsg(status_other)).raiseError[F, PriceResponse]
       }
 
 
